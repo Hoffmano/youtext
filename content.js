@@ -1,5 +1,6 @@
 (() => {
   const api = globalThis.YouTextTranscript;
+  const askYouTube = globalThis.YouTextAskYouTube;
   const ui = globalThis.YouTextUI;
   let renderedVideoId = null;
   let pendingVideoId = null;
@@ -91,6 +92,11 @@
     return controls;
   }
 
+  function topbar(main) {
+    const bar = document.createElement('div'); bar.className = 'topbar';
+    bar.append(logo(), searchBar(), preferenceControls(main)); return bar;
+  }
+
   function mountNativeToggle() {
     if (document.getElementById('youtext-native-toggle')) return;
     const panel = document.createElement('div'); panel.id = 'youtext-native-toggle';
@@ -124,6 +130,34 @@
       port.onDisconnect.addListener(disconnected);
       try { port.postMessage(message); } catch (error) { finish(reject, error); }
     });
+  }
+
+  function nativeSummaryPanel(text) {
+    const section = document.createElement('section'); section.className = 'summary native-summary';
+    const heading = document.createElement('h2'); heading.textContent = 'YouTube AI summary (experimental)';
+    const output = document.createElement('div'); output.className = 'summary-result'; output.setAttribute('aria-live', 'polite');
+    text.split(/\n+/).map((line) => line.replace(/^\s*[-*•]\s*/, '').trim()).filter(Boolean).forEach((line) => {
+      const paragraph = document.createElement('p'); paragraph.textContent = line; output.append(paragraph);
+    });
+    section.append(heading, output); return section;
+  }
+
+  function diagnosticPanel(text) {
+    const details = document.createElement('details'); details.className = 'ask-diagnostics';
+    const heading = document.createElement('summary'); heading.textContent = 'Ask YouTube diagnostic log';
+    const explanation = document.createElement('p'); explanation.textContent = 'Copy this log and send it with the video URL. It does not contain cookies or credentials.';
+    const log = document.createElement('textarea'); log.readOnly = true; log.rows = 12; log.value = text; log.setAttribute('aria-label', 'Ask YouTube diagnostic log');
+    const copy = document.createElement('button'); copy.type = 'button'; copy.className = 'copy-log'; copy.textContent = 'Copy diagnostic log';
+    copy.addEventListener('click', async () => {
+      try {
+        if (globalThis.navigator?.clipboard?.writeText) await globalThis.navigator.clipboard.writeText(text);
+        else { log.focus(); log.select(); if (!document.execCommand?.('copy')) throw new Error('Clipboard unavailable'); }
+        copy.textContent = 'Copied';
+      } catch {
+        log.focus(); log.select(); copy.textContent = 'Press Ctrl+C';
+      }
+    });
+    details.append(heading, explanation, log, copy); return details;
   }
 
   function summaryPanel(paragraphs, cachedSummary) {
@@ -299,10 +333,11 @@
     const contentStyle = document.createElement('style');
     contentStyle.textContent = ':host{display:block}main{box-sizing:border-box;min-height:100%;margin:0;padding:32px max(24px,calc((100vw - 70ch)/2));color:#e8e5df;background:#111315;font:18px/1.6 "Atkinson Hyperlegible",Verdana,Arial,sans-serif}ul{margin:0;padding:0;list-style:none}li{padding:11px 0;border-bottom:1px solid #292d32}a{color:#f2b0ac;text-decoration:none}a:hover{text-decoration:underline}a:focus-visible{outline:3px solid #ffd166;outline-offset:3px}';
     contentStyle.textContent += 'form{display:flex;align-items:center;gap:10px;margin-bottom:24px}input{box-sizing:border-box;min-width:0;height:42px;flex:1}input,button{font:inherit;padding:10px;border:1px solid #666;border-radius:4px;background:#1d2024;color:#eee}button{cursor:pointer}p{font-size:16px;color:#b8b2a8}.search-action svg{display:block;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}';
-    contentStyle.textContent += '.watched-action,.icon-action{font-size:18px;padding:3px 8px;line-height:1;min-width:30px}li{display:flex;align-items:center;gap:16px}.video-info{min-width:0;flex:1}.video-info a,.video-channel{display:block}.video-channel{margin-top:2px;color:#b8beb5;font-size:14px}li [role="status"]{display:block;font-size:16px;color:#b8b2a8}';
+    contentStyle.textContent += '.watched-action,.icon-action{font-size:18px;padding:3px 8px;line-height:1;min-width:30px}li{display:flex;align-items:center;gap:16px}.video-info{min-width:0;flex:1}.video-info a,.video-channel{display:block}.video-channel{margin-top:2px;color:#b8beb5;font-size:14px}li>.icon-action{margin-left:auto;flex:0 0 auto}li [role="status"]{display:block;font-size:16px;color:#b8b2a8}';
     contentStyle.textContent += ':host,main{background:#171c19;color:#e9e7df}.logo{display:flex;align-items:center;gap:9px;width:max-content;margin:0 0 28px;padding:12px 0;color:#b8d1bd;background:#171c19;font-weight:700}.logo svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}.logo svg path:first-child{fill:#b8d1bd;stroke:none}.icon-button{box-sizing:border-box;display:inline-grid;place-items:center;width:42px;height:42px;min-width:42px;min-height:42px;aspect-ratio:1;flex:0 0 42px;padding:8px;border:1px solid #46534a;border-radius:50%;background:#202722;color:#e9e7df;cursor:pointer}li{border-color:#303832}a{color:#b8d1bd}input,button{background:#202722;border-color:#46534a;color:#e9e7df}button:hover{background:#29332c}.youtext-toasts{position:fixed;z-index:10;right:24px;bottom:24px;max-width:min(420px,calc(100vw - 48px))}.youtext-toast{padding:12px 16px;border:1px solid #607066;border-radius:6px;background:#202722;color:#e9e7df;box-shadow:0 8px 28px #0008}.youtext-toast-error{border-color:#d66;color:#ffd9d7}.youtext-toast-success{border-color:#71947a;color:#d9f0df}';
     contentStyle.textContent += '.is-loading{position:relative;color:transparent!important;pointer-events:none}.is-loading::after{content:"";position:absolute;top:calc(50% - 10px);left:calc(50% - 10px);width:16px;height:16px;border:2px solid #46534a;border-top-color:#a8c8ae;border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}';
-    main.append(logo(), searchBar());
+    contentStyle.textContent += '.topbar{display:flex;align-items:center;gap:24px;margin-bottom:24px}.topbar .logo{flex:0 0 auto;margin:0}.topbar form{flex:1;margin:0}.preference-controls{display:flex;align-items:center;gap:16px;flex:0 0 auto}.preference-switch{position:relative;display:flex;align-items:center;gap:8px;color:#b8beb5;font:14px/1.4 "Atkinson Hyperlegible",Verdana,Arial,sans-serif;white-space:nowrap;cursor:pointer}.preference-switch input{position:absolute;width:1px;height:1px;margin:-1px;clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden}.switch-track{box-sizing:border-box;width:38px;height:22px;flex:0 0 38px;border:1px solid #68736b;border-radius:999px;background:#343b36}.switch-track::before{content:"";display:block;width:16px;height:16px;margin:2px;border-radius:50%;background:#d7ddd8;box-shadow:0 1px 3px #0008}.preference-switch input:checked+.switch-track{border-color:#8eaf97;background:#8eaf97}.preference-switch input:checked+.switch-track::before{transform:translateX(16px);background:#101713}.preference-switch input:focus-visible+.switch-track{outline:3px solid #dccb91;outline-offset:3px}@media(max-width:760px){.topbar{gap:12px}.preference-switch>span:last-child{display:none}}';
+    main.append(topbar(main));
     if (location.pathname === '/') main.append(watchLaterPanel());
     main.append(status, list); root.append(contentStyle, main);
     document.head.append(style); document.documentElement.append(host);
@@ -323,8 +358,8 @@
         const result = await globalThis.YouTextWatchLater.load();
         list.replaceChildren();
         for (const video of result.videos) {
-          const item = document.createElement('li'); const link = document.createElement('a');
-          link.href = video.href; link.textContent = api.titleSentenceCase(video.title); item.append(link, laterButton(video, true)); list.append(item);
+          const item = document.createElement('li');
+          item.append(videoLabel(video), laterButton(video, true)); list.append(item);
         }
         status.textContent = result.partial ? 'Showing the first part of the list.' : result.videos.length ? '' : 'No videos in Read later.';
       } catch (error) {
@@ -342,7 +377,7 @@
     return api.listingVideos(root || document).filter((video) => video.href !== `/watch?v=${videoId()}`);
   }
 
-  function render({ title, channel, paragraphs = [], recommendations, error, cachedSummary }) {
+  function render({ title, channel, paragraphs = [], recommendations, error, cachedSummary, nativeSummary, diagnostics }) {
     clearHome();
     document.documentElement.removeAttribute('data-youtext-loading');
     document.documentElement.removeAttribute('data-youtext-status');
@@ -350,23 +385,22 @@
     const displayTitle = api.titleSentenceCase(title || 'YouTube video');
     document.title = `${displayTitle} · YouText`;
     const main = document.createElement('main'); main.className = 'youtext';
-    const topbar = document.createElement('div'); topbar.className = 'topbar'; topbar.append(logo(), searchBar(), preferenceControls(main));
+    const headerBar = topbar(main);
     const header = document.createElement('header');
     const heading = document.createElement('h1'); heading.textContent = displayTitle;
     const byline = document.createElement('p'); byline.className = 'channel'; byline.textContent = api.titleSentenceCase(channel || '');
     header.append(heading, byline);
     const article = document.createElement('article');
-    if (error) { const message = document.createElement('p'); message.className = 'empty'; message.textContent = error; article.append(message); }
-    else paragraphs.forEach((paragraph) => { const node = document.createElement('p'); node.className = 'speech'; node.textContent = api.sentenceCase(paragraph); article.append(node); });
-    main.append(topbar, header);
-    if (paragraphs.length || cachedSummary) main.append(summaryPanel(paragraphs, cachedSummary));
-    main.append(videoActions());
-    if (error) main.append(article);
-    else {
-      const transcript = document.createElement('details'); transcript.className = 'transcript';
-      const toggle = document.createElement('summary'); toggle.textContent = 'Transcript';
-      transcript.append(toggle, article); main.append(transcript);
+    if (error) {
+      const message = document.createElement('p'); message.className = 'empty'; message.textContent = error; article.append(message);
+      if (diagnostics) article.append(diagnosticPanel(diagnostics));
     }
+    else paragraphs.forEach((paragraph) => { const node = document.createElement('p'); node.className = 'speech'; node.textContent = api.sentenceCase(paragraph); article.append(node); });
+    main.append(headerBar, header);
+    if (nativeSummary) main.append(nativeSummaryPanel(nativeSummary));
+    else if (paragraphs.length || cachedSummary) main.append(summaryPanel(paragraphs, cachedSummary));
+    main.append(videoActions());
+    if (error && !nativeSummary) main.append(article);
     main.append(titleList('Recommended', recommendations || []));
     if (!recommendations?.length) {
       const empty = document.createElement('p'); empty.className = 'empty'; empty.textContent = 'No recommended videos available.';
@@ -378,17 +412,56 @@
     style.textContent += 'body> :not(main.youtext){visibility:hidden!important}main.youtext{position:fixed;inset:0;z-index:2147483647;overflow:auto;box-sizing:border-box;background:#111315;width:100%;max-width:none;padding:40px max(24px,calc((100vw - 70ch)/2)) 96px;visibility:visible!important}.watched-action,.icon-action{font:18px/1.4 "Atkinson Hyperlegible",Verdana,Arial,sans-serif;padding:3px 8px;margin-left:12px;background:#1d2024;color:#eee;border:1px solid #666;border-radius:4px;cursor:pointer}.video-list [role="status"]{display:block;font:16px/1.5 "Atkinson Hyperlegible",Verdana,Arial,sans-serif;color:#b8b2a8}';
     style.textContent += 'body,main.youtext{background:#171c19;color:#e9e7df}.logo{display:flex;align-items:center;gap:9px;width:max-content;margin-bottom:20px;padding:12px 0;border:0;color:#b8d1bd;background:#171c19;text-decoration:none;font-weight:700}.logo svg{width:32px;height:32px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}.logo svg path:first-child{fill:#b8d1bd;stroke:none}.logo:hover{color:#d0e2d3;text-decoration:none}h1{color:#f4f1e9}.channel,.summary-status,.empty,.video-list [role="status"]{color:#b8beb5}.summary{margin-top:18px;padding:0;border:0;background:transparent;color:#b8beb5;font-size:16px}.summary h2{margin-bottom:8px;color:#b8beb5;font-size:1rem;font-weight:600}.summary-result{font-size:16px;line-height:1.5}.video-list{border:0}.summary select,.youtext input,.youtext form button,.icon-button{background:#202722;border-color:#46534a;color:#e9e7df}.summary-action,.icon-button.done{background:#8eaf97;color:#101713;border-color:#8eaf97}.summary-action:hover{background:#a5c3ac}.icon-button,.youtext form .icon-button{box-sizing:border-box;display:inline-grid;place-items:center;width:42px;height:42px;min-width:42px;min-height:42px;aspect-ratio:1;flex:0 0 42px;padding:8px;margin:0 6px 6px 0;border:1px solid #46534a;border-radius:50%;font:18px/1 "Atkinson Hyperlegible",Verdana,Arial,sans-serif;cursor:pointer}.youtext form .search-action{margin:0}.icon-button:hover,.youtext form button:hover{background:#29332c}.video-actions{margin-top:22px}.video-list li{border-color:#303832}.video-list a,a{color:#b8d1bd}.speech{color:#e9e7df}.summary-action:focus-visible,.summary-link:focus-visible,a:focus-visible,.summary select:focus-visible{outline-color:#dccb91}';
     style.textContent += '.is-loading{position:relative;color:transparent!important;pointer-events:none}.is-loading::after{content:"";position:absolute;top:calc(50% - 10px);left:calc(50% - 10px);width:16px;height:16px;border:2px solid #46534a;border-top-color:#a8c8ae;border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.youtext-toasts{position:fixed;z-index:10;right:24px;bottom:24px;max-width:min(420px,calc(100vw - 48px))}.youtext-toast{padding:12px 16px;border:1px solid #607066;border-radius:6px;background:#202722;color:#e9e7df;box-shadow:0 8px 28px #0008}.youtext-toast-error{border-color:#d66;color:#ffd9d7}.youtext-toast-success{border-color:#71947a;color:#d9f0df}@media(prefers-reduced-motion:reduce){.is-loading::after{animation-duration:1.5s}}';
-    style.textContent += '.topbar{display:flex;align-items:center;gap:24px;margin-bottom:24px}.topbar .logo{flex:0 0 auto;margin:0}.topbar form{flex:1;margin:0}@media(max-width:520px){.topbar{gap:12px}.logo span{display:none}}';
-    style.textContent += '.preference-controls{display:flex;align-items:center;gap:16px;flex:0 0 auto}.preference-switch{position:relative;display:flex;align-items:center;gap:8px;color:#b8beb5;font:14px/1.4 "Atkinson Hyperlegible",Verdana,Arial,sans-serif;white-space:nowrap;cursor:pointer}.preference-switch input{position:absolute;width:1px;height:1px;margin:-1px;clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden}.switch-track{box-sizing:border-box;width:38px;height:22px;flex:0 0 38px;border:1px solid #68736b;border-radius:999px;background:#343b36;transition:background .2s,border-color .2s}.switch-track::before{content:"";display:block;width:16px;height:16px;margin:2px;border-radius:50%;background:#d7ddd8;box-shadow:0 1px 3px #0008;transition:transform .2s,background .2s}.preference-switch input:checked+.switch-track{border-color:#8eaf97;background:#8eaf97}.preference-switch input:checked+.switch-track::before{transform:translateX(16px);background:#101713}.preference-switch input:focus-visible+.switch-track{outline:3px solid #dccb91;outline-offset:3px}main.youtext[data-theme="light"]{background:#f7f6f1;color:#20251f}main.youtext[data-theme="light"] h1{color:#151a16}main.youtext[data-theme="light"] .channel,main.youtext[data-theme="light"] .summary,main.youtext[data-theme="light"] .summary h2,main.youtext[data-theme="light"] .summary-status,main.youtext[data-theme="light"] .empty,main.youtext[data-theme="light"] .preference-switch{color:#59635b}main.youtext[data-theme="light"] .logo{background:#f7f6f1;color:#42694c}main.youtext[data-theme="light"] .youtext-input,main.youtext[data-theme="light"] form button,main.youtext[data-theme="light"] .icon-button{background:#fff;border-color:#aab4ac;color:#20251f}main.youtext[data-theme="light"] a{color:#356b45}main.youtext[data-theme="light"] .speech,main.youtext[data-theme="light"] .video-list li{border-color:#d7ddd8;color:#20251f}@media(prefers-reduced-motion:reduce){.switch-track,.switch-track::before{transition:none}}@media(max-width:760px){.topbar{flex-wrap:wrap}.topbar form{order:3;flex-basis:100%}.preference-controls{margin-left:auto}}';
+    style.textContent += '.topbar{display:flex;align-items:center;gap:24px;margin-bottom:24px}.topbar .logo{flex:0 0 auto;margin:0}.topbar form{flex:1;margin:0}@media(max-width:520px){.topbar{gap:12px}.logo span{display:none}.preference-switch>span:last-child{display:none}}';
+    style.textContent += '.preference-controls{display:flex;align-items:center;gap:16px;flex:0 0 auto}.preference-switch{position:relative;display:flex;align-items:center;gap:8px;color:#b8beb5;font:14px/1.4 "Atkinson Hyperlegible",Verdana,Arial,sans-serif;white-space:nowrap;cursor:pointer}.preference-switch input{position:absolute;width:1px;height:1px;margin:-1px;clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden}.switch-track{box-sizing:border-box;width:38px;height:22px;flex:0 0 38px;border:1px solid #68736b;border-radius:999px;background:#343b36;transition:background .2s,border-color .2s}.switch-track::before{content:"";display:block;width:16px;height:16px;margin:2px;border-radius:50%;background:#d7ddd8;box-shadow:0 1px 3px #0008;transition:transform .2s,background .2s}.preference-switch input:checked+.switch-track{border-color:#8eaf97;background:#8eaf97}.preference-switch input:checked+.switch-track::before{transform:translateX(16px);background:#101713}.preference-switch input:focus-visible+.switch-track{outline:3px solid #dccb91;outline-offset:3px}main.youtext[data-theme="light"]{background:#f7f6f1;color:#20251f}main.youtext[data-theme="light"] h1{color:#151a16}main.youtext[data-theme="light"] .channel,main.youtext[data-theme="light"] .summary,main.youtext[data-theme="light"] .summary h2,main.youtext[data-theme="light"] .summary-status,main.youtext[data-theme="light"] .empty,main.youtext[data-theme="light"] .preference-switch{color:#59635b}main.youtext[data-theme="light"] .logo{background:#f7f6f1;color:#42694c}main.youtext[data-theme="light"] .youtext-input,main.youtext[data-theme="light"] form button,main.youtext[data-theme="light"] .icon-button{background:#fff;border-color:#aab4ac;color:#20251f}main.youtext[data-theme="light"] a{color:#356b45}main.youtext[data-theme="light"] .speech,main.youtext[data-theme="light"] .video-list li{border-color:#d7ddd8;color:#20251f}@media(prefers-reduced-motion:reduce){.switch-track,.switch-track::before{transition:none}}';
+    style.textContent += '.ask-diagnostics{margin-top:18px}.ask-diagnostics summary{cursor:pointer;font-weight:600}.ask-diagnostics textarea{box-sizing:border-box;width:100%;margin:10px 0;padding:10px;border:1px solid #46534a;border-radius:4px;background:#101512;color:#dce6de;font:13px/1.45 monospace;resize:vertical}.copy-log{padding:8px 12px;border:1px solid #46534a;border-radius:4px;background:#202722;color:#e9e7df;cursor:pointer}';
     document.head.append(style); document.body.append(main);
+  }
+
+  function transcriptScroller(firstSegment) {
+    const selectors = [
+      'ytd-transcript-search-panel-renderer #body',
+      'ytd-transcript-renderer #body',
+      'ytd-engagement-panel-section-list-renderer #content'
+    ];
+    for (const selector of selectors) {
+      const candidate = [...document.querySelectorAll(selector)].find((node) => node.contains(firstSegment) && node.scrollHeight > node.clientHeight);
+      if (candidate) return candidate;
+    }
+    for (let node = firstSegment?.parentElement; node && node !== document.body; node = node.parentElement) {
+      if (node.scrollHeight > node.clientHeight) return node;
+    }
+    return null;
+  }
+
+  async function loadAllTranscriptSegments(isCurrent) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    if (!isCurrent()) throw new Error('Navigation changed');
+    const firstSegment = api.transcriptSegments(document)[0];
+    if (!firstSegment) return;
+    const scroller = transcriptScroller(firstSegment);
+    if (!scroller) return;
+    let previousCount = 0;
+    let stableChecks = 0;
+    for (let attempt = 0; attempt < 100 && isCurrent(); attempt++) {
+      const count = api.transcriptSegments(document).length;
+      stableChecks = count === previousCount ? stableChecks + 1 : 0;
+      previousCount = count;
+      const before = scroller.scrollTop;
+      scroller.scrollTop += Math.max(scroller.clientHeight, 600);
+      if (stableChecks >= 2 && (scroller.scrollTop === before || scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight)) break;
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+    if (!isCurrent()) throw new Error('Navigation changed');
+    scroller.scrollTop = 0;
+    await new Promise((resolve) => setTimeout(resolve, 150));
   }
 
   async function openNativeTranscript(isCurrent) {
     let clicked = false;
     let expanded = false;
-    return waitFor(() => {
-      const paragraphs = api.extractSegments(api.transcriptSegments(document));
-      if (paragraphs.length) return paragraphs;
+    await waitFor(() => {
+      if (api.transcriptSegments(document).length) return true;
       if (!clicked) {
         const button = api.transcriptButton(document);
         if (button) { clicked = true; button.click(); }
@@ -399,6 +472,10 @@
       }
       return null;
     }, { current: isCurrent });
+    await loadAllTranscriptSegments(isCurrent);
+    const paragraphs = api.extractSegments(api.transcriptSegments(document));
+    if (!paragraphs.length) throw new Error('Transcript segments contained no text');
+    return paragraphs;
   }
 
   async function showTranscript(id) {
@@ -429,14 +506,27 @@
     const result = await transcriptResult;
     clearTimeout(transcriptStatus);
     if (version === routeVersion) pendingVideoId = null;
+    let nativeSummary;
+    let diagnostics;
     if (result.error) {
       if (!isCurrent()) return;
       console.warn('[YouText] Native transcript unavailable:', result.error);
-      captureError = 'Transcript unavailable for this video.';
+      if (cachedSummary) captureError = 'Transcript unavailable for this video.';
+      else {
+        document.documentElement.dataset.youtextStatus = 'Trying Ask YouTube…';
+        try {
+          nativeSummary = await askYouTube.requestSummary(document, { current: isCurrent });
+        } catch (askError) {
+          console.warn('[YouText] Ask YouTube unavailable:', askError);
+          captureError = `Transcript unavailable. ${askError.message || 'Ask YouTube could not generate a summary.'}`;
+          const version = browser.runtime.getManifest?.().version || 'unknown';
+          diagnostics = `YouText version=${version}\nvideoId=${id}\npageLanguage=${document.documentElement.lang || 'unknown'}\n${askError.youtextDiagnostics || askError.stack || askError.message}`;
+        }
+      }
     } else paragraphs = result.paragraphs;
     if (!isCurrent()) return;
     renderedVideoId = id;
-    render({ ...details(), paragraphs, recommendations: recommendedVideos(), error: captureError, cachedSummary });
+    render({ ...details(), paragraphs, recommendations: recommendedVideos(), error: captureError, cachedSummary, nativeSummary, diagnostics });
   }
 
   function showHome() {

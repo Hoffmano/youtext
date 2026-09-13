@@ -14,12 +14,12 @@ test('parses embedded data without executing scripts and preserves quoted braces
 
 test('extracts playlist order, skips unavailable entries and reports continuation', () => {
   const data = { contents: { playlistVideoListRenderer: { contents: [
-    { playlistVideoRenderer: { videoId: 'b', title: { runs: [{ text: 'Segundo' }] } } },
-    { playlistVideoRenderer: { videoId: 'a', title: { simpleText: 'Primeiro' } } },
+    { playlistVideoRenderer: { videoId: 'b', title: { runs: [{ text: 'Segundo' }] }, shortBylineText: { runs: [{ text: 'Canal B' }] } } },
+    { playlistVideoRenderer: { videoId: 'a', title: { simpleText: 'Primeiro' }, ownerText: { simpleText: 'Canal A' } } },
     { playlistVideoRenderer: { videoId: 'hidden', title: { simpleText: 'Privado' }, isPlayable: false } },
     { continuationItemRenderer: {} }
   ] } }, unrelated: { playlistVideoRenderer: { videoId: 'other', title: { simpleText: 'Outro' } } } };
-  assert.deepEqual(playlist(data), { videos: [{ href: '/watch?v=b', title: 'Segundo' }, { href: '/watch?v=a', title: 'Primeiro' }], partial: true });
+  assert.deepEqual(playlist(data), { videos: [{ href: '/watch?v=b', title: 'Segundo', channel: 'Canal B' }, { href: '/watch?v=a', title: 'Primeiro', channel: 'Canal A' }], partial: true });
   assert.deepEqual(playlist({ playlistVideoListRenderer: { contents: [] } }), { videos: [], partial: false });
   assert.throws(() => playlist({ error: 'Login required' }), /signed in/);
 });
@@ -40,7 +40,7 @@ test('loads watch later above recommendations only on home', async () => {
       document, console, URLSearchParams, location: { pathname, search: '' },
       MutationObserver: window.MutationObserver, setInterval() {},
       YouTextTranscript: require('../lib/transcript.js'), YouTextUI: require('../lib/ui.js'),
-      YouTextWatchLater: { load: async () => { calls++; return { videos: [{ href: '/watch?v=saved', title: 'SALVO' }], partial: false }; } },
+      YouTextWatchLater: { load: async () => { calls++; return { videos: [{ href: '/watch?v=saved', title: 'SALVO', channel: 'Canal salvo' }], partial: false }; } },
       browser: { storage: { onChanged: { addListener() {} }, local: { get: async () => ({}) } } }
     });
     await new Promise(setImmediate);
@@ -49,6 +49,8 @@ test('loads watch later above recommendations only on home', async () => {
       assert.equal(root.querySelector('.watch-later').className, 'watch-later');
       assert.equal(root.querySelector('.watch-later li a').textContent, 'Salvo');
       assert.equal(root.querySelector('.watch-later li a').getAttribute('href'), '/watch?v=saved');
+      assert.equal(root.querySelector('.watch-later .video-channel').textContent, 'Canal salvo');
+      assert.equal(root.querySelector('.watch-later li').lastElementChild.getAttribute('aria-label'), 'Remove from Read later: SALVO');
       assert.equal(root.querySelector('[aria-label="Refresh Read later"]'), null);
       assert.equal(calls, 1);
     } else {

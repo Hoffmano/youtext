@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouText",
-  "version": "0.1.8",
+  "version": "0.1.10",
   "description": "Replace YouTube video pages with a distraction-free transcript.",
   "permissions": ["storage"],
   "host_permissions": ["https://generativelanguage.googleapis.com/*"],
@@ -15,7 +15,7 @@
         "*://youtube.com/*",
         "*://www.youtube.com/*"
       ],
-      "js": ["lib/transcript.js", "lib/feedback.js", "lib/watch-later.js", "lib/ui.js", "content.js"],
+      "js": ["lib/transcript.js", "lib/ask-youtube.js", "lib/feedback.js", "lib/watch-later.js", "lib/ui.js", "content.js"],
       "run_at": "document_start"
     }
   ],

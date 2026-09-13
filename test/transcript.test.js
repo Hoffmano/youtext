@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { extractSegments, normalizeText, sentenceCase, titleSentenceCase, videoLinks } = require('../lib/transcript.js');
+const { parseHTML } = require('linkedom');
+const { extractSegments, normalizeText, sentenceCase, titleSentenceCase, transcriptButton, transcriptSegments, videoLinks } = require('../lib/transcript.js');
 
 test('normalizes whitespace', () => assert.equal(normalizeText('  one\n  two\tthree  '), 'one two three'));
 test('capitalizes the first letter of a transcript segment', () => {
@@ -36,4 +37,14 @@ test('uses segment content when the text child is unavailable', () => {
 test('drops empty segments', () => {
   const segments = [{ querySelector: () => ({ textContent: '  ' }), textContent: '' }, { querySelector: () => ({ textContent: 'Useful text' }), textContent: '' }];
   assert.deepEqual(extractSegments(segments), ['Useful text']);
+});
+
+test('extracts modern YouTube transcript view-model segments', () => {
+  const { document } = parseHTML('<transcript-segment-view-model><div class="ytwTranscriptSegmentViewModelTimestamp">0:04</div><div class="ytwTranscriptSegmentViewModelTimestampA11yLabel">4 seconds</div><span class="ytAttributedStringHost" role="text">Modern transcript text</span></transcript-segment-view-model>');
+  assert.deepEqual(extractSegments(transcriptSegments(document)), ['Modern transcript text']);
+});
+
+test('does not mistake the transcript close action for the open action', () => {
+  const { document } = parseHTML('<ytd-engagement-panel-section-list-renderer><button aria-label="Close transcript"></button></ytd-engagement-panel-section-list-renderer><button aria-label="Show transcript"></button>');
+  assert.equal(transcriptButton(document).getAttribute('aria-label'), 'Show transcript');
 });

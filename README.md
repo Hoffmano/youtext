@@ -14,7 +14,8 @@ Extensão para Firefox que substitui páginas de vídeo do YouTube por sua trans
 - Usa a faixa padrão do painel de transcrição do YouTube.
 - Exibe título, canal e texto da transcrição.
 - Gera, sob demanda, um resumo em inglês com a quantidade necessária de tópicos essenciais ou um artigo em inglês usando o modelo Gemini escolhido nas configurações.
-- Bloqueia o player e informa quando não há transcrição disponível.
+- Quando não há transcrição, tenta experimentalmente solicitar um resumo pelo botão nativo **Perguntar** do YouTube.
+- Bloqueia o player e informa quando nem a transcrição nem o recurso **Perguntar** estão disponíveis.
 
 Não há conta, telemetria ou backend. Para gerar resumos, configure uma API key Gemini própria. Shorts, playlists, lives e embeds não fazem parte do v1.
 
@@ -31,6 +32,10 @@ Em páginas de vídeo, o player nativo permanece ativo atrás da interface, semp
 Ao marcar um vídeo como lido, o YouText salva esse estado localmente e o remove de **Read later** quando presente. Em visitas futuras, o botão indica **Already read**.
 
 ## Resumos com Gemini
+
+Como fluxo alternativo de teste, vídeos sem transcrição tentam usar o **Perguntar** do próprio YouTube. A extensão abre o painel, envia um pedido de resumo e renderiza a resposta. Esse caminho depende da disponibilidade e da estrutura interna experimental do YouTube, podendo deixar de funcionar sem aviso.
+
+Quando esse fluxo falha, abra **Ask YouTube diagnostic log** na tela e use **Copy diagnostic log**. O mesmo rastreamento aparece no console da página com o prefixo `[YouText Ask]`. O log registra etapas e elementos encontrados, sem incluir cookies ou credenciais.
 
 O botão **Já assisti**, ao lado dos títulos, aciona o menu nativo do YouTube: **Não tenho interesse → Diga o motivo → Já assisti ao vídeo → Enviar**. Essa ação envia feedback de recomendação ao YouTube; não equivale a reproduzir o vídeo nem garante que ele nunca reapareça. Depende de o card nativo oferecer essas opções (menus em português ou inglês). Se houver falha após a primeira etapa, o YouText informa que o motivo não foi confirmado.
 

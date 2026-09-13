@@ -1,7 +1,7 @@
 {
   "name": "youtext",
   "private": true,
-  "version": "0.1.8",
+  "version": "0.1.10",
   "scripts": {
     "test": "node --test",
     "package": "rm -f youtext.xpi.tmp && zip -qr youtext.xpi.tmp manifest.json content.js background.js lib options icons && mv youtext.xpi.tmp youtext.xpi",

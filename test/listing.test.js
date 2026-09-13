@@ -44,6 +44,9 @@ test('mounts an actual list, handles delayed cards, preserves search input and r
   assert.equal(host.shadowRoot.querySelector('.logo').getAttribute('href'), '/');
   assert.ok(host.shadowRoot.querySelector('.logo svg'));
   assert.equal(host.shadowRoot.querySelector('.logo span'), null);
+  assert.equal(host.shadowRoot.querySelector('.topbar').children.length, 3);
+  assert.equal(host.shadowRoot.querySelector('.topbar').firstElementChild.className, 'logo brand');
+  assert.equal(host.shadowRoot.querySelector('.topbar').children[1].tagName, 'FORM');
   assert.equal(host.shadowRoot.querySelector('input').placeholder, 'YouText');
   const root = host.shadowRoot;
   assert.ok(root.querySelector('main ul'));

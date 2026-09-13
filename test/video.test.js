@@ -54,6 +54,20 @@ test('expands description and waits for populated transcript text', async () => 
   assert.deepEqual(Array.from(await context.capture(() => true)), ['Texto carregado']);
 });
 
+test('opens and reads the modern YouTube transcript view-model', async () => {
+  const { document, context } = capturePage('<ytd-text-inline-expander><button id="expand">More</button></ytd-text-inline-expander>');
+  document.querySelector('#expand').onclick = () => {
+    const button = document.createElement('button'); button.setAttribute('aria-label', 'Show transcript');
+    button.onclick = () => {
+      const segment = document.createElement('transcript-segment-view-model');
+      segment.innerHTML = '<div class="ytwTranscriptSegmentViewModelTimestamp">0:04</div><span class="ytAttributedStringHost" role="text">Current YouTube text</span>';
+      document.body.append(segment);
+    };
+    document.body.append(button);
+  };
+  assert.deepEqual(Array.from(await context.capture(() => true)), ['Current YouTube text']);
+});
+
 test('repeated navigation events only open the transcript once', async () => {
   const { document, context } = capturePage('<button>Mostrar transcrição</button>');
   let clicks = 0;
@@ -79,7 +93,7 @@ test('cached summary renders immediately and still loads the native transcript',
   await context.show('current');
   assert.equal(clicks, 1);
   assert.equal(document.querySelector('.summary-result li').textContent, 'Cached.');
-  assert.equal(document.querySelector('.speech').textContent, 'Loaded with cache');
+  assert.equal(document.querySelector('.transcript'), null);
 });
 
 test('missing cache still opens and renders the native transcript', async () => {
@@ -93,7 +107,7 @@ test('missing cache still opens and renders the native transcript', async () => 
   };
   await context.show('current');
   assert.equal(clicks, 1);
-  assert.equal(document.querySelector('.speech').textContent, 'Loaded without cache');
+  assert.equal(document.querySelector('.transcript'), null);
 });
 
 test('video starts collapsed, links home and recommendations, and generates an article independently', async () => {
@@ -140,8 +154,8 @@ test('video starts collapsed, links home and recommendations, and generates an a
   assert.equal(document.querySelector('.channel').textContent, 'Canal com case misto');
   assert.equal(document.querySelector('header').nextElementSibling.className, 'summary');
   assert.equal(document.title, 'Vídeo muito bom · YouText');
-  assert.equal(document.querySelector('details').hasAttribute('open'), false);
-  assert.equal(document.querySelector('.speech').textContent, 'Transcrição original.');
+  assert.equal(document.querySelector('.transcript'), null);
+  assert.equal(document.querySelector('.speech'), null);
   const typography = Array.from(document.querySelectorAll('style')).map(style => style.textContent).join('');
   assert.match(typography, /font:18px\/1\.6 "Atkinson Hyperlegible",Verdana,Arial,sans-serif/);
   assert.match(typography, /100vw - 70ch/);
