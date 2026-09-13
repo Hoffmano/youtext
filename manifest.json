@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "YouText",
+  "version": "0.1.8",
+  "description": "Replace YouTube video pages with a distraction-free transcript.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://generativelanguage.googleapis.com/*"],
+  "background": { "scripts": ["lib/summary.js", "lib/model-fallback.js", "background.js"] },
+  "options_ui": { "page": "options/options.html" },
+  "icons": { "16": "icons/youtext.svg", "32": "icons/youtext.svg", "48": "icons/youtext.svg", "96": "icons/youtext.svg" },
+  "action": { "default_title": "Enable or disable YouText", "default_popup": "options/popup.html", "default_icon": "icons/youtext.svg" },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://youtube.com/*",
+        "*://www.youtube.com/*"
+      ],
+      "js": ["lib/transcript.js", "lib/feedback.js", "lib/watch-later.js", "lib/ui.js", "content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "youtext@local"
+    }
+  }
+}

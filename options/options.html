@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YouText settings</title>
+<style>body{max-width:70ch;margin:48px auto;padding:0 24px;background:#171c19;color:#e9e7df;font:17px/1.6 "Atkinson Hyperlegible",Verdana,Arial,sans-serif}h1{margin-bottom:8px;color:#f4f1e9}label,input,select,button{display:block;width:100%;box-sizing:border-box}input,select{margin:8px 0 14px;padding:10px;background:#202722;border:1px solid #46534a;border-radius:6px;color:#e9e7df;font:inherit}input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #dccb91;outline-offset:3px}button{padding:10px;border:0;border-radius:6px;background:#8eaf97;color:#101713;font:700 16px/1.5 "Atkinson Hyperlegible",Verdana,Arial,sans-serif;cursor:pointer}.is-loading{position:relative;color:transparent!important;pointer-events:none}.is-loading::after{content:"";position:absolute;top:50%;left:50%;width:16px;height:16px;margin:-10px;border:2px solid #46534a;border-top-color:#e9e7df;border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.note,#status{color:#b8beb5;font-size:16px}a{color:#b8d1bd}</style>
+<h1>YouText settings</h1>
+<p>Paste a Gemini API key to generate summaries. The key stays in this Firefox profile.</p>
+<form id="settings"><label for="api-key">Gemini API key</label><input id="api-key" type="password" autocomplete="off" spellcheck="false"><button>Save settings</button></form>
+<p id="status" role="status"></p>
+<p class="note">Create a key in <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer">Google AI Studio</a>. Usage limits are managed there.</p>
+<script src="../lib/ui.js"></script>
+<script src="options.js"></script>
+</html>

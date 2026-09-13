@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>YouText</title>
+<style>body{width:280px;margin:0;padding:20px;background:#171c19;color:#e9e7df;font:16px/1.55 "Atkinson Hyperlegible",Verdana,Arial,sans-serif}h1{font-size:20px;line-height:1.4;margin:0 0 16px}label{position:relative;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;border:1px solid #39443d;border-radius:12px;background:#202722;font-weight:600;cursor:pointer}input{position:absolute;width:1px;height:1px;margin:-1px;clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden}.switch-track{box-sizing:border-box;width:42px;height:24px;flex:0 0 42px;border:1px solid #68736b;border-radius:999px;background:#343b36;transition:background .2s,border-color .2s}.switch-track::before{content:"";display:block;width:18px;height:18px;margin:2px;border-radius:50%;background:#d7ddd8;box-shadow:0 1px 3px #0008;transition:transform .2s,background .2s}input:checked+.switch-track{border-color:#8eaf97;background:#8eaf97}input:checked+.switch-track::before{transform:translateX(18px);background:#101713}input:focus-visible+.switch-track{outline:3px solid #dccb91;outline-offset:3px}input:disabled+.switch-track{opacity:.55}p{color:#b8beb5;font-size:16px}button{display:grid;place-items:center;width:42px;height:42px;margin-left:auto;background:#202722;color:#e9e7df;border:1px solid #46534a;border-radius:50%;font:20px/1 "Atkinson Hyperlegible",Verdana,Arial,sans-serif;cursor:pointer}button:hover{background:#29332c}:focus-visible{outline:3px solid #dccb91;outline-offset:3px}@media(prefers-reduced-motion:reduce){.switch-track,.switch-track::before{transition:none}}</style>
+<h1>YouText</h1>
+<label>YouText enabled <input id="enabled" type="checkbox" role="switch" disabled><span class="switch-track" aria-hidden="true"></span></label>
+<p id="status" role="status">Loading…</p>
+<div id="settings-action"></div>
+<script src="../lib/ui.js"></script>
+<script src="popup.js"></script>
+</html>
