@@ -67,13 +67,19 @@ test('repeated navigation events only open the transcript once', async () => {
   await first;
 });
 
-test('cached summary renders without opening the native transcript', async () => {
+test('cached summary renders immediately and still loads the native transcript', async () => {
   const { document, context } = capturePage('<button>Mostrar transcrição</button>', { bullets: ['Cached.'] });
   let clicks = 0;
-  document.querySelector('button').onclick = () => { clicks++; };
+  document.querySelector('button').onclick = () => {
+    clicks++;
+    const segment = document.createElement('ytd-transcript-segment-renderer');
+    segment.textContent = 'Loaded with cache';
+    document.body.append(segment);
+  };
   await context.show('current');
-  assert.equal(clicks, 0);
+  assert.equal(clicks, 1);
   assert.equal(document.querySelector('.summary-result li').textContent, 'Cached.');
+  assert.equal(document.querySelector('.speech').textContent, 'Loaded with cache');
 });
 
 test('missing cache still opens and renders the native transcript', async () => {

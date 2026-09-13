@@ -408,32 +408,32 @@
     const isCurrent = () => version === routeVersion && videoId() === id;
     document.documentElement.dataset.youtextLoading = 'true';
     document.documentElement.dataset.youtextStatus = 'Opening video…';
+    const transcriptResult = openNativeTranscript(isCurrent).then(
+      (paragraphs) => ({ paragraphs }),
+      (error) => ({ error })
+    );
     let cachedSummary;
     try {
       cachedSummary = await browser.runtime.sendMessage({ type: 'youtext:cached-summary', videoId: id });
     } catch { /* Cache lookup failure must not block transcript loading. */ }
     if (!isCurrent()) return;
     if (cachedSummary) {
-      pendingVideoId = null;
       renderedVideoId = id;
       render({ ...details(), paragraphs: [], recommendations: recommendedVideos(), cachedSummary });
-      return;
     }
     const transcriptStatus = setTimeout(() => {
       if (isCurrent() && !cachedSummary) document.documentElement.dataset.youtextStatus = 'Loading transcript…';
     }, 350);
     let paragraphs;
     let captureError;
-    try {
-      paragraphs = await openNativeTranscript(isCurrent);
-    } catch (error) {
+    const result = await transcriptResult;
+    clearTimeout(transcriptStatus);
+    if (version === routeVersion) pendingVideoId = null;
+    if (result.error) {
       if (!isCurrent()) return;
-      console.warn('[YouText] Native transcript unavailable:', error);
+      console.warn('[YouText] Native transcript unavailable:', result.error);
       captureError = 'Transcript unavailable for this video.';
-    } finally {
-      clearTimeout(transcriptStatus);
-      if (version === routeVersion) pendingVideoId = null;
-    }
+    } else paragraphs = result.paragraphs;
     if (!isCurrent()) return;
     renderedVideoId = id;
     render({ ...details(), paragraphs, recommendations: recommendedVideos(), error: captureError, cachedSummary });
