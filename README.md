@@ -2,6 +2,10 @@
 
 Extensão para Firefox que substitui páginas de vídeo do YouTube por sua transcrição. A intenção é ler mais e assistir menos.
 
+<img width="1873" height="1014" alt="image" src="https://github.com/user-attachments/assets/d7cfb214-f338-4dcc-bfd8-1d1a2763119f" />
+<img width="1873" height="1014" alt="image" src="https://github.com/user-attachments/assets/7b0ddc3f-e9db-4c6e-aa4c-62fb6f55cadc" />
+
+
 ## O que faz
 
 - Na Home e nos resultados de pesquisa, exibe uma lista simples de títulos com links para `/watch?v=…`.
