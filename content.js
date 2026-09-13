@@ -414,8 +414,10 @@
     } catch { /* Cache lookup failure must not block transcript loading. */ }
     if (!isCurrent()) return;
     if (cachedSummary) {
+      pendingVideoId = null;
       renderedVideoId = id;
       render({ ...details(), paragraphs: [], recommendations: recommendedVideos(), cachedSummary });
+      return;
     }
     const transcriptStatus = setTimeout(() => {
       if (isCurrent() && !cachedSummary) document.documentElement.dataset.youtextStatus = 'Loading transcript…';

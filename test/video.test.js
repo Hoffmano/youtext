@@ -4,7 +4,7 @@ const { parseHTML } = require('linkedom');
 const { readFileSync } = require('node:fs');
 const vm = require('node:vm');
 
-function capturePage(body) {
+function capturePage(body, cachedSummary = null) {
   const { document, window } = parseHTML(`<html><head></head><body>${body}</body></html>`);
   const source = readFileSync(require.resolve('../content.js'), 'utf8').replace('  initialize();', '  globalThis.capture = openNativeTranscript; globalThis.show = showTranscript;');
   const context = vm.createContext({
@@ -12,7 +12,22 @@ function capturePage(body) {
     document, YouTextTranscript: require('../lib/transcript.js'), YouTextUI: require('../lib/ui.js'), console,
     location: { pathname: '/watch', search: '?v=current' }, URLSearchParams,
     MutationObserver: window.MutationObserver,
-    setInterval, clearInterval, setTimeout, clearTimeout
+    setInterval, clearInterval, setTimeout, clearTimeout,
+    browser: {
+      storage: { local: { get: async () => ({}), set: async () => {} } },
+      runtime: {
+        sendMessage: async (message) => message.type === 'youtext:cached-summary' ? cachedSummary : [],
+        connect: () => {
+          const listeners = [];
+          return {
+            onMessage: { addListener: fn => listeners.push(fn), removeListener: () => {} },
+            onDisconnect: { addListener: () => {}, removeListener: () => {} },
+            postMessage: () => queueMicrotask(() => listeners.forEach(fn => fn({ type: 'result', result: { bullets: ['Generated.'] } }))),
+            disconnect() {}
+          };
+        }
+      }
+    }
   });
   // The perpetual player/home timers are irrelevant to capture tests.
   vm.runInContext(source.replace('  setInterval(pausePlayers, 250);', '').replace("  setInterval(() => { if (location.pathname === '/' || location.pathname === '/results') showHome(); }, 500);", ''), context);
@@ -50,6 +65,29 @@ test('repeated navigation events only open the transcript once', async () => {
   context.location.search = '?v=other';
   document.body.append(document.createElement('div'));
   await first;
+});
+
+test('cached summary renders without opening the native transcript', async () => {
+  const { document, context } = capturePage('<button>Mostrar transcrição</button>', { bullets: ['Cached.'] });
+  let clicks = 0;
+  document.querySelector('button').onclick = () => { clicks++; };
+  await context.show('current');
+  assert.equal(clicks, 0);
+  assert.equal(document.querySelector('.summary-result li').textContent, 'Cached.');
+});
+
+test('missing cache still opens and renders the native transcript', async () => {
+  const { document, context } = capturePage('<button>Mostrar transcrição</button>');
+  let clicks = 0;
+  document.querySelector('button').onclick = () => {
+    clicks++;
+    const segment = document.createElement('ytd-transcript-segment-renderer');
+    segment.textContent = 'Loaded without cache';
+    document.body.append(segment);
+  };
+  await context.show('current');
+  assert.equal(clicks, 1);
+  assert.equal(document.querySelector('.speech').textContent, 'Loaded without cache');
 });
 
 test('video starts collapsed, links home and recommendations, and generates an article independently', async () => {
